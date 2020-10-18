@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping(value = "/products")
@@ -25,7 +27,7 @@ public class ProductsController {
   @PostMapping
   public void add(@Valid Product p, BindingResult result) {
     if (result.hasErrors()) {
-      return;
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Binding error");
     }
     productRepository.save(p);
   }
@@ -34,7 +36,7 @@ public class ProductsController {
   public void update(@PathVariable("id") Long id, @Valid Product p, BindingResult result) {
     if (result.hasErrors()) {
       p.setId(id);
-      return;
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Binding error");
     }
     productRepository.save(p);
   }
@@ -42,7 +44,7 @@ public class ProductsController {
   @GetMapping("/{product_id}")
   public Product findById(@PathVariable("id") Long id) {
     return productRepository.findById(id)
-      .orElseThrow(() -> new IllegalArgumentException("Id not found:" + id));
+      .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Id not found: " + id));
   }
 
   public List<Product> findByCategory(@RequestParam String category) {
