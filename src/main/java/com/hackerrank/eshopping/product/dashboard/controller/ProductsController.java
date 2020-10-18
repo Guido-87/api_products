@@ -1,15 +1,18 @@
 package com.hackerrank.eshopping.product.dashboard.controller;
 
 import com.hackerrank.eshopping.product.dashboard.model.Product;
+import com.hackerrank.eshopping.product.dashboard.repository.ProductRepository;
 
 import java.util.List;
 
-import com.hackerrank.eshopping.product.dashboard.dao.ProductsDAO;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.ModelAttribute;
+import javax.validation.Valid;
+
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,34 +20,41 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping(value = "/products")
 public class ProductsController {
 
-  @Autowired
-  ProductsDAO productsDAO;
+  private ProductRepository productRepository;
 
-  @RequestMapping(method = RequestMethod.POST)
-  public void add(@ModelAttribute("product") Product p) {
-    productsDAO.add(p);
+  @PostMapping
+  public void add(@Valid Product p, BindingResult result) {
+    if (result.hasErrors()) {
+      return;
+    }
+    productRepository.save(p);
   }
 
-  @RequestMapping(method = RequestMethod.PUT)
-  public void update(@ModelAttribute("product") Product p) {
-    productsDAO.update(p);
+  @PutMapping("/{product_id}")
+  public void update(@PathVariable("id") Long id, @Valid Product p, BindingResult result) {
+    if (result.hasErrors()) {
+      p.setId(id);
+      return;
+    }
+    productRepository.save(p);
   }
 
-  @RequestMapping(value = "/get/{product_id}")
-  public Product getById(@PathVariable int id) {
-    return productsDAO.getById(id);
+  @GetMapping("/{product_id}")
+  public Product findById(@PathVariable("id") Long id) {
+    return productRepository.findById(id)
+      .orElseThrow(() -> new IllegalArgumentException("Id not found:" + id));
   }
 
-  public List<Product> getByCategory(@RequestParam String category) {
-    return productsDAO.getByCategory(category);
+  public List<Product> findByCategory(@RequestParam String category) {
+    return productRepository.findByCategory(category);
   }
 
-  public List<Product> getByCategoryAndAvailability(@RequestParam String category,
+  public List<Product> findByCategoryAndAvailability(@RequestParam String category,
     @RequestParam String availability) {
-    return productsDAO.getByCategoryAndAvailability(category, availability);
+    return productRepository.findByCategoryAndAvailability(category, availability);
   }
 
-  public List<Product> getAll() {
-    return productsDAO.getAll();
+  public Iterable<Product> findAll() {
+    return productRepository.findAll();
   }
 }
