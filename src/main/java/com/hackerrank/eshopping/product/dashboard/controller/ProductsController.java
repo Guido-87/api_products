@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,20 +26,21 @@ public class ProductsController {
   private ProductRepository productRepository;
 
   @PostMapping
-  public void add(@Valid Product p, BindingResult result) {
-    if (result.hasErrors()) {
+  public boolean add(@Valid Product p, BindingResult result) {
+    if (result.hasErrors() || productRepository.existsById(p.getId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Binding error");
     }
     productRepository.save(p);
+    return true;
   }
 
   @PutMapping("/{product_id}")
-  public void update(@PathVariable("id") Long id, @Valid Product p, BindingResult result) {
-    if (result.hasErrors()) {
-      p.setId(id);
+  public boolean update(@PathVariable("id") Long id, @Valid Product p, BindingResult result) {
+    if (result.hasErrors() || !productRepository.existsById(p.getId())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Binding error");
     }
     productRepository.save(p);
+    return true;
   }
 
   @GetMapping("/{product_id}")
@@ -48,15 +50,18 @@ public class ProductsController {
   }
 
   public List<Product> findByCategory(@RequestParam String category) {
-    return productRepository.findByCategory(category);
+    Sort sort = Sort.by(Sort.Order.asc("availability"), Sort.Order.asc("discountedPrice"), Sort.Order.asc("id"));
+    return productRepository.findByCategory(category, sort);
   }
 
   public List<Product> findByCategoryAndAvailability(@RequestParam String category,
     @RequestParam String availability) {
-    return productRepository.findByCategoryAndAvailability(category, availability);
+    Sort sort = Sort.by(Sort.Order.desc("discountPercentage"), Sort.Order.asc("discountedPrice"),
+      Sort.Order.asc("id"));
+    return productRepository.findByCategoryAndAvailability(category, availability, sort);
   }
 
-  public Iterable<Product> findAll() {
-    return productRepository.findAll();
+  public List<Product> findAll() {
+    return productRepository.findAllByOrderByIdAsc();
   }
 }
