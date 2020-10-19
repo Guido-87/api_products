@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackerrank.eshopping.product.dashboard.model.Product;
 import com.hackerrank.eshopping.product.dashboard.repository.ProductsRepository;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.validation.Valid;
 
@@ -84,14 +86,17 @@ public class ProductsController {
 	}
 
 	@GetMapping(params = "category")
-	public String findByCategory(@RequestParam String category) throws JsonProcessingException {
+	public String findByCategory(@RequestParam String category) throws JsonProcessingException, UnsupportedEncodingException {
+		category = java.net.URLDecoder.decode(category, StandardCharsets.UTF_8.name());
 		Sort sort = Sort.by(Sort.Order.desc("availability"), Sort.Order.asc("discountedPrice"), Sort.Order.asc("id"));
 		List<Product> list = productsRepository.findByCategory(category, sort);
 		return new ObjectMapper().writeValueAsString(list);
 	}
 
 	@GetMapping(params = { "category", "availability" })
-	public String findByCategoryAndAvailability(@RequestParam String category, @RequestParam Boolean availability) throws JsonProcessingException {
+	public String findByCategoryAndAvailability(@RequestParam String category, @RequestParam Boolean availability)
+			throws JsonProcessingException, UnsupportedEncodingException {
+		category = java.net.URLDecoder.decode(category, StandardCharsets.UTF_8.name());
 		List<Product> list = productsRepository.findByCategoryAndAvailability(category, availability);
 		return new ObjectMapper().writeValueAsString(list);
 	}

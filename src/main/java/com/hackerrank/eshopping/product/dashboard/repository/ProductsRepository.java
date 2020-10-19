@@ -15,7 +15,7 @@ public interface ProductsRepository extends CrudRepository<Product, Long> {
 	public List<Product> findByCategory(String category, Sort sort);
 
 	@Query(value = "SELECT * FROM Products p WHERE p.category = ?1 AND p.availability = ?2 ORDER BY "
-			+ "(retail_price - discounted_price) / retail_price * 100 DESC, p.discounted_price ASC, p.id ASC",
+			+ "(p.retail_price - p.discounted_price) / p.retail_price * 100 DESC, p.discounted_price ASC, p.id ASC",
 			nativeQuery = true)
 	public List<Product> findByCategoryAndAvailability(String category, Boolean availability);
 
