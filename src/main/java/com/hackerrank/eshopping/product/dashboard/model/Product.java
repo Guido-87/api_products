@@ -1,50 +1,43 @@
 package com.hackerrank.eshopping.product.dashboard.model;
 
+import java.io.Serializable;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.Formula;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "Products")
-public class Product {
+public class Product implements Serializable {
+
+	private static final long serialVersionUID = 6260916742725562864L;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
 	private String name;
-
 	private String category;
-
 	@JsonProperty("retail_price")
 	private Double retailPrice;
-
 	@JsonProperty("discounted_price")
 	private Double discountedPrice;
-
 	private Boolean availability;
-
-	@Formula(value = "(retail_price - discounted_price) / retail_price * 100")
-	private Double discountPercentage;
 
 	public Product() {
 	}
 
 	public Product(Long id, String name, String category, Double retailPrice, Double discountedPrice,
-			Boolean availability, Double discountPercentage) {
+			Boolean availability) {
 		this.id = id;
 		this.name = name;
 		this.category = category;
 		this.retailPrice = retailPrice;
 		this.discountedPrice = discountedPrice;
 		this.availability = availability;
-		this.discountPercentage = discountPercentage;
 	}
 
 	public Long getId() {
@@ -93,13 +86,5 @@ public class Product {
 
 	public void setAvailability(Boolean availability) {
 		this.availability = availability;
-	}
-
-	public Double getDiscountPercentage() {
-		return discountPercentage;
-	}
-
-	public void setDiscountPercentage(Double discountPercentage) {
-		this.discountPercentage = discountPercentage;
 	}
 }

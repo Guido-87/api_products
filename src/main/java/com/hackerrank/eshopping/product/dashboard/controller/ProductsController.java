@@ -1,5 +1,7 @@
 package com.hackerrank.eshopping.product.dashboard.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hackerrank.eshopping.product.dashboard.model.Product;
 import com.hackerrank.eshopping.product.dashboard.repository.ProductsRepository;
 
@@ -9,6 +11,7 @@ import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,52 +34,71 @@ public class ProductsController {
 		this.productsRepository = productRepository;
 	}
 
-//	Validate if id exists
 	@PostMapping
-	public boolean add(@Valid @RequestBody Product p, BindingResult result) {
+	public ResponseEntity<String> add(@Valid @RequestBody Product newProduct, BindingResult result) {
 		if (result.hasErrors()) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Binding error");
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Binding error.");
 		}
-		productsRepository.save(p);
-		return true;
+		if (newProduct.getId() != null && productsRepository.existsById(newProduct.getId())) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Id already exists.");
+		}
+		Product createdProduct = productsRepository.save(newProduct);
+		if (createdProduct != null) {
+			return new ResponseEntity<>("Product added succesfully.", HttpStatus.CREATED);
+		} else {
+			return new ResponseEntity<>("Error adding product.", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
-//	TODO & merge with add
+//	TODO Merge with add
 	@PutMapping("/{id}")
-	public boolean update(@PathVariable("id") Long id, @Valid @RequestBody Product p, BindingResult result) {
-		if (result.hasErrors() || !productsRepository.existsById(id)) {
-			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Binding error");
+	public ResponseEntity<String> update(@PathVariable("id") Long id, @Valid @RequestBody Product updatedProduct,
+			BindingResult result) {
+		Product productToUpdate = productsRepository.findById(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Id " + id + " not found."));
+		if (result.hasErrors()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Binding error.");
 		}
-		productsRepository.save(p);
-		return true;
+		if (updatedProduct.getAvailability() != null) {
+			productToUpdate.setAvailability(updatedProduct.getAvailability());
+		}
+		if (updatedProduct.getDiscountedPrice() != null) {
+			productToUpdate.setDiscountedPrice(updatedProduct.getDiscountedPrice());
+		}
+		if (updatedProduct.getRetailPrice() != null) {
+			productToUpdate.setRetailPrice(updatedProduct.getRetailPrice());
+		}
+		productToUpdate = productsRepository.save(productToUpdate);
+		if (productToUpdate != null) {
+			return new ResponseEntity<>("Product updated succesfully.", HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>("Error updating product.", HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
-//	OK
 	@GetMapping("/{id}")
-	public Product findById(@PathVariable("id") String id) {
-		return productsRepository.findById(Long.valueOf(id))
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Id not found: " + id));
+	public String findById(@PathVariable("id") Long id) throws JsonProcessingException {
+		Product product = productsRepository.findById(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Id " + id + " not found."));
+		return new ObjectMapper().writeValueAsString(product);
 	}
 
-//	OK
 	@GetMapping(params = "category")
-	public List<Product> findByCategory(@RequestParam String category) {
+	public String findByCategory(@RequestParam String category) throws JsonProcessingException {
 		Sort sort = Sort.by(Sort.Order.desc("availability"), Sort.Order.asc("discountedPrice"), Sort.Order.asc("id"));
-		return productsRepository.findByCategory(category, sort);
-	}
-	
-//	OK
-	@GetMapping(params = { "category", "availability" })
-	public List<Product> findByCategoryAndAvailability(@RequestParam String category,
-			@RequestParam Boolean availability) {
-		Sort sort = Sort.by(Sort.Order.asc("discountPercentage"), Sort.Order.asc("discountedPrice"),
-				Sort.Order.asc("id"));
-		return productsRepository.findByCategoryAndAvailability(category, availability, sort);
+		List<Product> list = productsRepository.findByCategory(category, sort);
+		return new ObjectMapper().writeValueAsString(list);
 	}
 
-//	OK 
+	@GetMapping(params = { "category", "availability" })
+	public String findByCategoryAndAvailability(@RequestParam String category, @RequestParam Boolean availability) throws JsonProcessingException {
+		List<Product> list = productsRepository.findByCategoryAndAvailability(category, availability);
+		return new ObjectMapper().writeValueAsString(list);
+	}
+
 	@GetMapping
-	public List<Product> findAll() {
-		return productsRepository.findAllByOrderByIdAsc();
+	public String findAll() throws JsonProcessingException {
+		List<Product> list = productsRepository.findAllByOrderByIdAsc();
+		return new ObjectMapper().writeValueAsString(list);
 	}
 }
