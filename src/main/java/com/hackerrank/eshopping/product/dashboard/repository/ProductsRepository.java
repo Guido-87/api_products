@@ -9,11 +9,11 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ProductRepository extends CrudRepository<Product, Long> {
+public interface ProductsRepository extends CrudRepository<Product, Long> {
 
-  public List<Product> findByCategory(String category, Sort sort);
+	public List<Product> findByCategory(String category, Sort sort);
 
-  public List<Product> findByCategoryAndAvailability(String category, String availability, Sort sort);
+	public List<Product> findByCategoryAndAvailability(String category, Boolean availability, Sort sort);
 
-  public List<Product> findAllByOrderByIdAsc();
+	public List<Product> findAllByOrderByIdAsc();
 }
